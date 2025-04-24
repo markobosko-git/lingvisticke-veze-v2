@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hrvatske Riječi sa Sanskrtskim Korijenima</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #FDE68A; /* text-yellow-300 */
+        }
+
+        input::placeholder, select {
+            color: #FDE68A;
+            opacity: 0.7;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.5);
+        }
+
+        .category-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .word-card {
+            transition: all 0.2s ease;
+        }
+
+        .word-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Sanskrit symbol animation */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .sanskrit-symbol {
+            animation: pulse 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-gray-800 to-blue-900">
+    <div id="root"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <script type="text/babel">
+        const { useState } = React;
+
+        const SanskritCroatianDashboard = () => {
+          // Word data - Sanskrit roots and Croatian meanings
+          const wordData = [
+            { croatian: "BOG", sanskrit: "BHAGA", meaning: "Bog, božanstvo" },
+            { croatian: "VATRA", sanskrit: "ATHARVAN", meaning: "Vatra" },
+            { croatian: "SLAVA", sanskrit: "ŚRAVAS", meaning: "Slava, čast" },
+            { croatian: "DIV/DIVAN", sanskrit: "DEVA", meaning: "Božanstveno, prekrasno" },
+            { croatian: "ŽIVA/ŽIVOT", sanskrit: "JIVA", meaning: "Život, življenje" },
+            { croatian: "DOM", sanskrit: "DAMA", meaning: "Kuća, dom" },
+            { croatian: "VEDA", sanskrit: "VID/VEDETI", meaning: "Znanje, znati" },
+            { croatian: "NEBO", sanskrit: "NABHAS", meaning: "Nebo, nebesa" },
+            { croatian: "RAJ", sanskrit: "RĀJA", meaning: "Raj (izvorno 'kraljevstvo')" },
+            { croatian: "SUNCE", sanskrit: "SURYA", meaning: "Sunce" },
+            { croatian: "NOV", sanskrit: "NAVA", meaning: "Novo" },
+            { croatian: "BROJ", sanskrit: "BHŪRI", meaning: "Broj, mnogo" },
+            { croatian: "SVETI", sanskrit: "ŚVETA", meaning: "Sveto, posvećeno (doslovno 'sjajno, svijetleće')" },
+            { croatian: "BRAT", sanskrit: "BHRĀTR", meaning: "Brat" },
+            { croatian: "SESTRA", sanskrit: "SVASR", meaning: "Sestra" },
+            { croatian: "MATI", sanskrit: "MĀTR", meaning: "Majka" },
+            { croatian: "SIN", sanskrit: "SŪNU", meaning: "Sin" },
+            { croatian: "DAN", sanskrit: "DINA", meaning: "Dan" },
+            { croatian: "NOĆI", sanskrit: "NAKTA", meaning: "Noć" },
+            { croatian: "MEDVJED", sanskrit: "MADHV-AD", meaning: "Medojed (medvjed)" },
+            { croatian: "VUK", sanskrit: "VRKA", meaning: "Vuk" },
+            { croatian: "DJEVER", sanskrit: "DEVAR", meaning: "Djever" },
+            { croatian: "OKO", sanskrit: "AKSHI", meaning: "Oko" },
+            { croatian: "SRCE", sanskrit: "HRDAYA", meaning: "Srce" },
+            { croatian: "KRAVA", sanskrit: "GAVA", meaning: "Krava" },
+            { croatian: "MIŠ", sanskrit: "MUSHA", meaning: "Miš" },
+            { croatian: "VRATA", sanskrit: "VARTA", meaning: "Vrata" },
+            { croatian: "POLJE", sanskrit: "PALA", meaning: "Polje" }
+          ];
+
+          // State variables
+          const [searchTerm, setSearchTerm] = useState('');
+          const [selectedCategory, setSelectedCategory] = useState('all');
+          const [visibleWords, setVisibleWords] = useState(10);
+          
+          // Categories
+          const categories = [
+            { id: 'all', name: 'Sve Riječi' },
+            { id: 'family', name: 'Obiteljski Pojmovi', words: ['BRAT', 'SESTRA', 'MATI', 'SIN', 'DJEVER'] },
+            { id: 'nature', name: 'Priroda i Elementi', words: ['VATRA', 'NEBO', 'SUNCE', 'DAN', 'NOĆI', 'POLJE'] },
+            { id: 'spiritual', name: 'Duhovni Pojmovi', words: ['BOG', 'SLAVA', 'DIV/DIVAN', 'RAJ', 'SVETI'] },
+            { id: 'animals', name: 'Životinje', words: ['MEDVJED', 'VUK', 'KRAVA', 'MIŠ'] },
+            { id: 'body', name: 'Dijelovi Tijela', words: ['OKO', 'SRCE'] }
+          ];
+
+          // Filter words based on search and category
+          const filteredWords = wordData.filter(word => {
+            const matchesSearch = 
+              word.croatian.toLowerCase().includes(searchTerm.toLowerCase()) || 
+              word.sanskrit.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              word.meaning.toLowerCase().includes(searchTerm.toLowerCase());
+            
+            const matchesCategory = 
+              selectedCategory === 'all' || 
+              categories.find(cat => cat.id === selectedCategory)?.words?.includes(word.croatian);
+            
+            return matchesSearch && matchesCategory;
+          }).slice(0, visibleWords);
+
+          // Sanskrit symbols for decorative purposes
+          const sanskritSymbols = [
+            { symbol: "ॐ", name: "Aum/Om" },
+            { symbol: "॥", name: "Double Danda" },
+            { symbol: "꣸", name: "Svastika" },
+            { symbol: "☸", name: "Dharma Wheel" },
+            { symbol: "ࣽ", name: "Sanskrit Om" }
+          ];
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-gray-800 to-blue-900 p-6 text-yellow-300 font-sans">
+              <header className="flex flex-col items-center md:flex-row md:justify-between gap-4 mb-8">
+                <div className="flex items-center">
+                  <h1 className="text-3xl font-bold text-yellow-300">Hrvatske Riječi sa Sanskrtskim Korijenima</h1>
+                  <span className="text-4xl mx-4 text-yellow-200 sanskrit-symbol">ॐ</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {sanskritSymbols.map((symbol, index) => (
+                    <div key={index} className="h-10 w-10 flex items-center justify-center bg-blue-800 rounded-full text-xl text-yellow-200" title={symbol.name}>
+                      {symbol.symbol}
+                    </div>
+                  ))}
+                </div>
+              </header>
+              
+              <div className="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0 mb-8">
+                <div className="w-full md:w-2/3">
+                  <div className="bg-blue-800 bg-opacity-40 rounded-lg p-4 shadow-lg">
+                    <div className="flex flex-col md:flex-row gap-4 mb-4">
+                      {/* Search bar */}
+                      <div className="flex-grow">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Pretraži riječi..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-gray-700 text-yellow-200 border border-blue-700 rounded-md p-2 pl-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                          />
+                          {searchTerm && (
+                            <button
+                              onClick={() => setSearchTerm('')}
+                              className="absolute right-3 top-2.5 text-gray-400 hover:text-yellow-200"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Category dropdown */}
+                      <div className="md:w-1/3">
+                        <select
+                          value={selectedCategory}
+                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          className="w-full bg-gray-700 text-yellow-200 border border-blue-700 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        >
+                          {categories.map(category => (
+                            <option key={category.id} value={category.id}>{category.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Word cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredWords.length > 0 ? (
+                        filteredWords.map((word, index) => (
+                          <div 
+                            key={index} 
+                            className="word-card bg-gray-800 bg-opacity-60 rounded-md p-4 border-l-4 border-yellow-500 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-xl font-bold text-yellow-300">{word.croatian}</h3>
+                              <div className="text-sm px-2 py-1 bg-blue-900 rounded-full text-yellow-200">
+                                {selectedCategory !== 'all' ? 
+                                  categories.find(cat => cat.words?.includes(word.croatian))?.name || 'Other' : 
+                                  categories.find(cat => cat.id !== 'all' && cat.words?.includes(word.croatian))?.name || 'Other'}
+                              </div>
+                            </div>
+                            <div className="text-lg text-yellow-200 opacity-90 mt-1">{word.sanskrit}</div>
+                            <div className="text-gray-300 mt-2">{word.meaning}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="col-span-2 text-center py-8 text-gray-300">
+                          Nema rezultata za vašu pretragu.
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Load more button */}
+                    {filteredWords.length < wordData.filter(word => {
+                      const matchesSearch = 
+                        word.croatian.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        word.sanskrit.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        word.meaning.toLowerCase().includes(searchTerm.toLowerCase());
+                      
+                      const matchesCategory = 
+                        selectedCategory === 'all' || 
+                        categories.find(cat => cat.id === selectedCategory)?.words?.includes(word.croatian);
+                      
+                      return matchesSearch && matchesCategory;
+                    }).length && (
+                      <button
+                        onClick={() => setVisibleWords(prev => prev + 8)}
+                        className="mt-6 mx-auto block px-6 py-2 bg-blue-700 hover:bg-blue-600 text-yellow-200 rounded-md transition-colors"
+                      >
+                        Učitaj Više Riječi
+                      </button>
+                    )}
+                  </div>
+                </div>
+              
+                {/* Info sidebar */}
+                <div className="w-full md:w-1/3">
+                  <div className="bg-blue-800 bg-opacity-40 rounded-lg p-4 shadow-lg">
+                    <div className="flex items-center mb-4">
+                      <span className="text-3xl mr-2 text-yellow-200 sanskrit-symbol">ॐ</span>
+                      <h2 className="text-xl font-bold">O ovoj poveznici</h2>
+                    </div>
+                    <p className="text-gray-300 mb-4">
+                      Hrvatski i sanskrt dijele zajedničko porijeklo iz praindoeuropskog jezika koji se govorio prije više od 6000 godina. Kada su se indoeuropski narodi razdvojili i krenuli u različite dijelove Euroazije, ponijeli su sa sobom svoj jezik koji se postupno mijenjao. Slavenski preci i drevni Indijci potječu od iste jezične obitelji, što objašnjava iznenađujuće sličnosti između hrvatskih riječi i sanskrta, najstarijeg zapisanog indijskog jezika.
+                    </p>
+                    <div className="border-t border-blue-700 pt-4 mt-4">
+                      <h3 className="font-bold text-yellow-200 mb-2">Jeste li znali?</h3>
+                      <p className="text-gray-300">
+                        Sličnosti između hrvatskog jezika i sanskrta odražavaju migracije i kulturne razmjene koje su se dogodile prije tisuće godina, povezujući moderne slavenske jezike s drevnom indijskom civilizacijom.
+                      </p>
+                    </div>
+                    <div className="border-t border-blue-700 pt-4 mt-4">
+                      <h3 className="font-bold text-yellow-200 mb-2">Kategorije</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {categories.filter(cat => cat.id !== 'all').map(category => (
+                          <button
+                            key={category.id}
+                            onClick={() => setSelectedCategory(category.id)}
+                            className={`category-btn px-3 py-1 rounded-full text-sm ${
+                              selectedCategory === category.id 
+                                ? 'bg-yellow-500 text-blue-900' 
+                                : 'bg-blue-900 text-yellow-200 hover:bg-blue-800'
+                            }`}
+                          >
+                            {category.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <footer className="text-center text-gray-400 mt-8">
+                <p>© 2025 Croatian-Sanskrit Linguistic Connection Project</p>
+                <div className="flex justify-center space-x-6 mt-2">
+                  {sanskritSymbols.map((symbol, index) => (
+                    <span key={index} className="text-xl text-yellow-200">{symbol.symbol}</span>
+                  ))}
+                </div>
+              </footer>
+            </div>
+          );
+        };
+
+        // Render the app
+        ReactDOM.render(<SanskritCroatianDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
